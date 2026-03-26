@@ -73,39 +73,45 @@ function setupInteract(el) {
     let x = 0, y = 0;
     const ratio = el.tagName === 'IMG' ? el.naturalWidth / el.naturalHeight : null;
 
-    interact(el).draggable({
-        listeners: { move(event) { 
-            x += event.dx; y += event.dy; 
-            event.target.style.transform = `translate(${x}px, ${y}px)`; 
-        } }
-    }).resizable({
-        edges: { left: true, right: true, bottom: true, top: true },
-        listeners: { move(event) {
-            let { width, height } = event.rect;
-            const isLock = document.getElementById('aspect-ratio-lock')?.checked;
-            
-            // 1. จัดการสัดส่วน (ถ้าเป็นรูปภาพ)
-            if (isLock && ratio) {
-                if (width / height > ratio) width = height * ratio; else height = width / ratio;
+    interact(el)
+        .draggable({
+            // allowFrom: '.drag-handle', // ถ้าอยากให้ลากได้เฉพาะที่ปุ่ม ให้เปิดบรรทัดนี้
+            inertia: true, // เพิ่มความลื่นไหล
+            autoScroll: true, // ให้จอเลื่อนตามถ้าลากไปสุดขอบ
+            listeners: { 
+                move(event) { 
+                    x += event.dx; y += event.dy; 
+                    event.target.style.transform = `translate(${x}px, ${y}px)`; 
+                } 
             }
-            
-            x += event.deltaRect.left; y += event.deltaRect.top;
+        })
+        .resizable({
+            edges: { left: true, right: true, bottom: true, top: true },
+            // เพิ่มปุ่มเล็กๆ ตรงมุมให้กดง่ายขึ้น (Resize Handle)
+            margin: 15, // ขยายพื้นที่กดขอบให้กว้างขึ้นสำหรับนิ้วมือ
+            listeners: { 
+                move(event) {
+                    let { width, height } = event.rect;
+                    const isLock = document.getElementById('aspect-ratio-lock')?.checked;
+                    
+                    if (isLock && ratio) {
+                        if (width / height > ratio) width = height * ratio; else height = width / ratio;
+                    }
+                    
+                    x += event.deltaRect.left; y += event.deltaRect.top;
+                    Object.assign(event.target.style, { 
+                        width: `${width}px`, 
+                        height: `${height}px`, 
+                        transform: `translate(${x}px, ${y}px)` 
+                    });
 
-            // 2. อัปเดตขนาดกล่อง
-            Object.assign(event.target.style, { 
-                width: `${width}px`, 
-                height: `${height}px`, 
-                transform: `translate(${x}px, ${y}px)` 
-            });
-
-            // 3. ✨ ทริคเด็ด: ถ้าเป็นข้อความหรือติ๊กถูก ให้ขยาย Font ตามความสูงกล่อง
-            if (event.target.classList.contains('draggable-text')) {
-                // ลดขนาดลงนิดหน่อย (0.8) เพื่อให้ตัวอักษรไม่เบียดขอบกล่องเกินไป
-                event.target.style.fontSize = `${height * 0.8}px`; 
-                event.target.style.lineHeight = `${height}px`; // จัดให้อยู่กึ่งกลางแนวตั้ง
+                    if (event.target.classList.contains('draggable-text')) {
+                        event.target.style.fontSize = `${height * 0.8}px`;
+                        event.target.style.lineHeight = `${height}px`;
+                    }
+                }
             }
-        }}
-    });
+        });
 }
 
 // --- 4. การจัดการ Selection และลบ ---
@@ -210,3 +216,10 @@ document.getElementById('save-btn').addEventListener('click', async () => {
     link.href = URL.createObjectURL(new Blob([await pdfDoc.save()], { type: 'application/pdf' }));
     link.download = 'edited.pdf'; link.click();
 });
+
+function addDragHandle(el) {
+    const handle = document.createElement('div');
+    handle.innerHTML = "✢"; // สัญลักษณ์ย้าย
+    handle.classList.add('drag-handle');
+    el.appendChild(handle);
+}
