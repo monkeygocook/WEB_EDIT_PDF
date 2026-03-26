@@ -35,12 +35,26 @@ document.getElementById('pdf-input').addEventListener('change', async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    pdfDocBytes = await file.arrayBuffer();
-    const loadingTask = pdfjsLib.getDocument(URL.createObjectURL(file));
-    pdfjsDoc = await loadingTask.promise;
-    
-    currentPageNum = 1; // เริ่มที่หน้า 1 เสมอ
-    renderPage(currentPageNum);
+    console.log("เริ่มโหลดไฟล์:", file.name); // เช็คใน Console (F12)
+
+    try {
+        pdfDocBytes = await file.arrayBuffer();
+        
+        // สร้าง URL สำหรับ pdf.js
+        const fileURL = URL.createObjectURL(file);
+        const loadingTask = pdfjsLib.getDocument(fileURL);
+        
+        pdfjsDoc = await loadingTask.promise;
+        
+        console.log("โหลด PDF สำเร็จ! จำนวนหน้าทั้งหมด:", pdfjsDoc.numPages);
+        
+        currentPageNum = 1; 
+        renderPage(currentPageNum); // สั่งวาดหน้าแรก และอัปเดตเลขหน้าบนจอ
+        
+    } catch (error) {
+        console.error("เกิดข้อผิดพลาดในการโหลด PDF:", error);
+        alert("โหลดไฟล์ไม่ได้นะเพื่อน ลองเช็คไฟล์ดูอีกทีครับ");
+    }
 });
 
 // --- 3. Event: โหลดรูปภาพ ---
