@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Image Editor - โต้ x เพื่อน</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="toolbar">
+        <input type="file" id="pdf-input" accept=".pdf">
+        <input type="file" id="img-input" accept="image/*">
+        <button id="save-btn">Save PDF</button>
+    </div>
+
+    <div id="editor-container">
+        <div id="pdf-wrapper">
+            <canvas id="pdf-canvas"></canvas>
+            </div>
+    </div>
+
+    <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

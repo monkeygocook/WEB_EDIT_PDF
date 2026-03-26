@@ -1,0 +1,22 @@
+body { font-family: sans-serif; margin: 0; background: #f0f0f0; }
+.toolbar { background: #333; color: white; padding: 10px; display: flex; gap: 10px; }
+
+#editor-container { 
+    display: flex; justify-content: center; padding: 20px; 
+    overflow: auto; height: calc(100vh - 60px); 
+}
+
+#pdf-wrapper { 
+    position: relative; /* สำคัญมาก เพื่อให้รูปลูก (absolute) อ้างอิงพิกัดจากตรงนี้ */
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+}
+
+.draggable-img {
+    position: absolute;
+    top: 0; left: 0;
+    border: 2px dashed #007bff;
+    cursor: move;
+    touch-action: none; /* สำหรับมือถือ */
+}
+
+#pdf-canvas { display: block; }
