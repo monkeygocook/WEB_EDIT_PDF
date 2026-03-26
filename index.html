@@ -8,22 +8,38 @@
 </head>
 <body>
     <div class="toolbar">
-       <button id="save-btn" style="background: #28a745; color: white;">Save PDF</button>
-    
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <label style="font-size: 12px;">PDF:</label>
+            <input type="file" id="pdf-input" accept=".pdf">
+            <label style="font-size: 12px;">รูป:</label>
+            <input type="file" id="img-input" accept="image/*">
+        </div>
+
+        <hr style="border: 0.5px solid rgba(255,255,255,0.2); height: 20px;">
+
+        <div class="pagination-controls">
+            <button onclick="prevPage()">◀</button>
+            <span id="page-info" style="font-size: 12px; min-width: 60px; text-align: center;">หน้า 0 / 0</span>
+            <button onclick="nextPage()">▶</button>
+        </div>
+
+        <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; background: rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 5px;">
+            <input type="checkbox" id="aspect-ratio-lock"> 
+            <span style="font-size: 12px;">ล็อคสัดส่วน (Shift)</span>
+        </label>
+
+        <button id="save-btn" style="background: #28a745; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold;">Save PDF</button>
+        
         <button id="delete-btn-mobile" 
             onclick="if(selectedElement) deleteImage(selectedElement)" 
-            style="background: #e74c3c; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold;">🗑 ลบรูปที่เลือก
+            style="background: #e74c3c; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold;">🗑 ลบรูป
         </button>
-        <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; background: rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 5px;">
-        <input type="checkbox" id="aspect-ratio-lock"> 
-        <span style="font-size: 12px;">ล็อคสัดส่วน (Shift)</span>
-    </label>
     </div>
 
     <div id="editor-container">
         <div id="pdf-wrapper">
             <canvas id="pdf-canvas"></canvas>
-            </div>
+        </div>
     </div>
 
     <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
@@ -31,4 +47,3 @@
     <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
     <script src="script.js"></script>
 </body>
-</html>
