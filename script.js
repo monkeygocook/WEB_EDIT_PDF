@@ -3,7 +3,7 @@ let pdfDocBytes = null;      // เก็บ Raw Data ของ PDF
 let pdfjsDoc = null;         // เก็บ Object ของ pdf.js สำหรับ Render
 let currentPageNum = 1;
 const scale = 1.5;           // ความละเอียดการแสดงผลบนจอ
-const pageImages = {};       // เก็บ Element รูปภาพแยกตามหน้า { 1: [img1, img2] }
+const pageImages = {};       // เก็บ Element รูปภาพแยกตามหน้า
 let selectedElement = null;  // เก็บว่าตอนนี้เราเลือกรูปไหนอยู่
 
 // --- 1. ฟังก์ชัน Render หน้า PDF ---
@@ -20,7 +20,7 @@ async function renderPage(num) {
 
     await page.render({ canvasContext: context, viewport }).promise;
     
-    // จัดการการแสดงผลรูปภาพ: ซ่อนรูปหน้าอื่น โชว์เฉพาะหน้าปัจจุบัน
+    // แสดงเฉพาะรูปของหน้านี้
     document.querySelectorAll('.draggable-img').forEach(img => {
         const isCurrent = parseInt(img.dataset.page) === num;
         img.style.display = isCurrent ? 'block' : 'none';
@@ -31,48 +31,39 @@ async function renderPage(num) {
 
 // --- 2. ฟังก์ชันสำหรับเลือกรูป ---
 function selectImage(el) {
-    // ล้างสถานะรูปอื่นก่อน
     document.querySelectorAll('.draggable-img').forEach(img => {
         img.style.border = "2px dashed #3498db";
         img.style.zIndex = "1";
     });
     
     selectedElement = el;
-    selectedElement.style.border = "2px solid #ff0000"; // ไฮไลท์สีแดง
-    selectedElement.style.zIndex = "100"; // ดึงขึ้นมาข้างบนสุดตอนเลือก
-    console.log("เลือกรูปภาพแล้ว พร้อมลบ");
+    selectedElement.style.border = "2px solid #ff0000"; 
+    selectedElement.style.zIndex = "100";
 }
 
 // คลิกที่ว่างเพื่อยกเลิกการเลือก
 document.addEventListener('mousedown', (e) => {
     if (!e.target.classList.contains('draggable-img') && !e.target.closest('.toolbar')) {
-        if (selectedElement) {
-            selectedElement.style.border = "2px dashed #3498db";
-        }
+        if (selectedElement) selectedElement.style.border = "2px dashed #3498db";
         selectedElement = null;
     }
 });
 
 // --- 3. ฟังก์ชันลบรูป ---
 function deleteImage(el) {
-    if (!el) return;
-    if (!confirm("ต้องการลบรูปนี้ใช่ไหมเพื่อน?")) return;
-
+    if (!el || !confirm("ต้องการลบรูปนี้ใช่ไหมเพื่อน?")) return;
     const pageNum = el.dataset.page;
-    el.remove(); // ลบออกจากหน้าจอ
-    
+    el.remove();
     if (pageImages[pageNum]) {
         pageImages[pageNum] = pageImages[pageNum].filter(img => img !== el);
     }
-    
     selectedElement = null;
-    console.log("ลบรูปเรียบร้อย!");
 }
 
-// ดักฟังการกดปุ่ม Delete หรือ Backspace
+// ดักปุ่ม Delete / Backspace
 document.addEventListener('keydown', (e) => {
     if ((e.key === "Delete" || e.key === "Backspace") && selectedElement) {
-        e.preventDefault(); // กัน Browser กดย้อนกลับ
+        e.preventDefault();
         deleteImage(selectedElement);
     }
 }, true);
@@ -81,17 +72,13 @@ document.addEventListener('keydown', (e) => {
 document.getElementById('pdf-input').addEventListener('change', async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
     try {
         pdfDocBytes = await file.arrayBuffer();
-        const fileURL = URL.createObjectURL(file);
-        const loadingTask = pdfjsLib.getDocument(fileURL);
+        const loadingTask = pdfjsLib.getDocument(URL.createObjectURL(file));
         pdfjsDoc = await loadingTask.promise;
-        
         currentPageNum = 1; 
         renderPage(currentPageNum);
     } catch (error) {
-        console.error("Error loading PDF:", error);
         alert("โหลดไฟล์ไม่ได้นะเพื่อน");
     }
 });
@@ -99,7 +86,7 @@ document.getElementById('pdf-input').addEventListener('change', async (e) => {
 // --- 5. Event: โหลดรูปภาพ ---
 document.getElementById('img-input').addEventListener('change', (e) => {
     const file = e.target.files[0];
-    if (!file || !pdfjsDoc) return alert("กรุณาโหลด PDF ก่อนวางรูปครับเพื่อน!");
+    if (!file || !pdfjsDoc) return alert("กรุณาโหลด PDF ก่อนวางรูป!");
 
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -109,24 +96,19 @@ document.getElementById('img-input').addEventListener('change', (e) => {
         img.style.width = '150px';
         img.dataset.page = currentPageNum;
         
-        // ทำให้คลิกเลือกได้
         img.addEventListener('mousedown', (e) => {
             e.stopPropagation();
             selectImage(img);
         });
         
         document.getElementById('pdf-wrapper').appendChild(img);
-        
-        if (!pageImages[currentPageNum]) pageImages[currentPageNum] = [];
-        pageImages[currentPageNum].push(img);
-        
         setupInteract(img);
-        selectImage(img); // เลือกรูปให้อัตโนมัติเมื่ออัปโหลดเสร็จ
+        selectImage(img);
     };
     reader.readAsDataURL(file);
 });
 
-// --- 6. ฟังก์ชันควบคุมการลากวาง (Interact.js) ---
+// --- 6. ฟังก์ชันลากวางและย่อขยาย (ล็อคสัดส่วน) ---
 function setupInteract(el) {
     let x = 0, y = 0;
     interact(el)
@@ -143,10 +125,26 @@ function setupInteract(el) {
             listeners: {
                 move(event) {
                     let { width, height } = event.rect;
+                    
+                    // Logic ล็อคสัดส่วน (Shift หรือ Checkbox)
+                    const lockCheckbox = document.getElementById('aspect-ratio-lock');
+                    const isLock = event.shiftKey || (lockCheckbox && lockCheckbox.checked);
+                    
+                    if (isLock) {
+                        const ratio = event.target.naturalWidth / event.target.naturalHeight;
+                        if (width / height > ratio) {
+                            width = height * ratio;
+                        } else {
+                            height = width / ratio;
+                        }
+                    }
+
                     x += event.deltaRect.left;
                     y += event.deltaRect.top;
+
                     Object.assign(event.target.style, {
-                        width: `${width}px`, height: `${height}px`,
+                        width: `${width}px`,
+                        height: `${height}px`,
                         transform: `translate(${x}px, ${y}px)`
                     });
                 }
@@ -157,17 +155,14 @@ function setupInteract(el) {
 // --- 7. ปุ่มเปลี่ยนหน้า ---
 window.nextPage = () => {
     if (!pdfjsDoc || currentPageNum >= pdfjsDoc.numPages) return;
-    currentPageNum++;
-    renderPage(currentPageNum);
+    currentPageNum++; renderPage(currentPageNum);
 };
-
 window.prevPage = () => {
     if (!pdfjsDoc || currentPageNum <= 1) return;
-    currentPageNum--;
-    renderPage(currentPageNum);
+    currentPageNum--; renderPage(currentPageNum);
 };
 
-// --- 8. ฟังก์ชัน Save (รวมร่าง PDF) ---
+// --- 8. ฟังก์ชัน Save PDF ---
 document.getElementById('save-btn').addEventListener('click', async () => {
     if (!pdfDocBytes) return alert("ไม่มีไฟล์ให้เซฟนะเพื่อน!");
     
@@ -191,12 +186,7 @@ document.getElementById('save-btn').addEventListener('click', async () => {
         const pdfY = height - ((rect.top - wrapperRect.top + rect.height) * ratioY);
 
         const imgBytes = await fetch(el.src).then(res => res.arrayBuffer());
-        let embeddedImg;
-        if (el.src.includes('image/png')) {
-            embeddedImg = await pdfDoc.embedPng(imgBytes);
-        } else {
-            embeddedImg = await pdfDoc.embedJpg(imgBytes);
-        }
+        const embeddedImg = el.src.includes('image/png') ? await pdfDoc.embedPng(imgBytes) : await pdfDoc.embedJpg(imgBytes);
 
         targetPage.drawImage(embeddedImg, {
             x: pdfX, y: pdfY,
@@ -206,9 +196,8 @@ document.getElementById('save-btn').addEventListener('click', async () => {
     }
 
     const pdfBytes = await pdfDoc.save();
-    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
     const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = 'edited_by_friend.pdf';
+    link.href = URL.createObjectURL(new Blob([pdfBytes], { type: 'application/pdf' }));
+    link.download = 'edited_pdf.pdf';
     link.click();
 });
