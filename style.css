@@ -80,4 +80,28 @@ button:active { transform: scale(0.95); }
         padding: 10px 8px;
         font-size: 12px;
     }
+
+    .draggable-text {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    min-width: 50px;
+    min-height: 20px;
+    border: 1px dashed #3498db;
+    padding: 5px;
+    cursor: move;
+    font-size: 16px;
+    color: black;
+    background: rgba(255, 255, 255, 0.5);
+    outline: none; /* ลบเส้นขอบตอนโฟกัส */
+    white-space: nowrap;
+    overflow: hidden;
 }
+
+/* เมื่อถูกเลือก (Selected) */
+.draggable-text.selected {
+    border: 2px solid #ff0000;
+}
+
+}
+
