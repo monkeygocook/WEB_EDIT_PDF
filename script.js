@@ -206,3 +206,33 @@ document.getElementById('img-input').addEventListener('change', (e) => {
 
 window.nextPage = () => { if (pdfjsDoc && currentPageNum < pdfjsDoc.numPages) { currentPageNum++; renderPage(currentPageNum); } };
 window.prevPage = () => { if (pdfjsDoc && currentPageNum > 1) { currentPageNum--; renderPage(currentPageNum); } };
+
+window.addCheckmark = () => {
+    if (!pdfjsDoc) return alert("โหลด PDF ก่อนนะเพื่อน!");
+    
+    const checkDiv = document.createElement('div');
+    // ใช้ตัวอักษร Heavy Check Mark เพื่อให้เป็นสีดำตามฟอนต์
+    checkDiv.innerText = "✔"; 
+    
+    // ตั้งค่าสไตล์ให้เป็นสีดำ
+    checkDiv.style.color = "#000000"; 
+    checkDiv.style.fontWeight = "bold"; // เพิ่มความหนาให้ดูชัด
+    checkDiv.style.fontSize = "36px"; // ขนาดเริ่มต้นให้พอดี
+    checkDiv.style.background = "transparent"; // โปร่งใส ไม่มีพื้นหลัง
+    
+    // ตั้งค่าเบื้องต้นให้เป็น Draggable/Selected
+    checkDiv.style.border = "1px dashed transparent";
+    checkDiv.classList.add('draggable-text'); 
+    checkDiv.dataset.page = currentPageNum;
+    checkDiv.dataset.type = "text"; 
+
+    // คลิกเพื่อเลือก
+    checkDiv.addEventListener('mousedown', (e) => {
+        e.stopPropagation();
+        selectElementFunc(checkDiv);
+    });
+
+    document.getElementById('pdf-wrapper').appendChild(checkDiv);
+    setupInteract(checkDiv); // เรียกใช้ interact.js
+    selectElementFunc(checkDiv); // เลือกให้อัตโนมัติหลังสร้าง
+};

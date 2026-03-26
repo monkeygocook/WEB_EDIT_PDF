@@ -97,12 +97,22 @@ button:active { transform: scale(0.95); }
     white-space: nowrap;
     overflow: hidden;
     user-select: none; /* กันไม่ให้คลุมดำข้อความตอนกำลังลาก */
+    background: transparent; /* ติ๊กถูกไม่ควรมีพื้นหลังขาว */
+    user-select: none; /* กันการคลุมดำตอนลาก */
 }
 
 .draggable-text[contenteditable="true"] {
     user-select: text; /* ให้คลุมดำได้ตอนกำลังแก้ไข */
     background: white;
     box-shadow: 0 0 5px rgba(0,0,0,0.2);
+}
+
+.draggable-text[contenteditable="false"].selected {
+    border: 2px solid #ff0000;
+}
+
+.draggable-text:hover {
+    border: 1px dashed #3498db; 
 }
 
 /* เมื่อถูกเลือก (Selected) */
