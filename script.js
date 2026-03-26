@@ -3,7 +3,6 @@ let pdfDocBytes = null;      // เก็บ Raw Data ของ PDF
 let pdfjsDoc = null;         // เก็บ Object ของ pdf.js สำหรับ Render
 let currentPageNum = 1;
 const scale = 1.5;           // ความละเอียดการแสดงผลบนจอ
-const pageImages = {};       // เก็บ Element รูปภาพแยกตามหน้า
 let selectedElement = null;  // เก็บว่าตอนนี้เราเลือกรูปไหนอยู่
 
 // --- 1. ฟังก์ชัน Render หน้า PDF ---
@@ -20,13 +19,14 @@ async function renderPage(num) {
 
     await page.render({ canvasContext: context, viewport }).promise;
     
-    // แสดงเฉพาะรูปของหน้านี้
+    // จัดการการแสดงผลรูปภาพ: ซ่อนรูปหน้าอื่น โชว์เฉพาะหน้าปัจจุบัน
     document.querySelectorAll('.draggable-img').forEach(img => {
         const isCurrent = parseInt(img.dataset.page) === num;
         img.style.display = isCurrent ? 'block' : 'none';
     });
 
-    document.getElementById('page-info').innerText = `หน้า ${num} / ${pdfjsDoc.numPages}`;
+    const info = document.getElementById('page-info');
+    if (info) info.innerText = `หน้า ${num} / ${pdfjsDoc.numPages}`;
 }
 
 // --- 2. ฟังก์ชันสำหรับเลือกรูป ---
@@ -39,6 +39,7 @@ function selectImage(el) {
     selectedElement = el;
     selectedElement.style.border = "2px solid #ff0000"; 
     selectedElement.style.zIndex = "100";
+    console.log("เลือกรูปภาพแล้ว");
 }
 
 // คลิกที่ว่างเพื่อยกเลิกการเลือก
@@ -52,19 +53,19 @@ document.addEventListener('mousedown', (e) => {
 // --- 3. ฟังก์ชันลบรูป ---
 function deleteImage(el) {
     if (!el || !confirm("ต้องการลบรูปนี้ใช่ไหมเพื่อน?")) return;
-    const pageNum = el.dataset.page;
     el.remove();
-    if (pageImages[pageNum]) {
-        pageImages[pageNum] = pageImages[pageNum].filter(img => img !== el);
-    }
     selectedElement = null;
+    console.log("ลบรูปเรียบร้อย");
 }
 
-// ดักปุ่ม Delete / Backspace
+// ดักฟังปุ่ม Delete / Backspace
 document.addEventListener('keydown', (e) => {
     if ((e.key === "Delete" || e.key === "Backspace") && selectedElement) {
-        e.preventDefault();
-        deleteImage(selectedElement);
+        // เช็คว่าไม่ได้กำลังพิมพ์ใน input อื่นอยู่
+        if (e.target.tagName !== 'INPUT') {
+            e.preventDefault();
+            deleteImage(selectedElement);
+        }
     }
 }, true);
 
@@ -79,6 +80,7 @@ document.getElementById('pdf-input').addEventListener('change', async (e) => {
         currentPageNum = 1; 
         renderPage(currentPageNum);
     } catch (error) {
+        console.error(error);
         alert("โหลดไฟล์ไม่ได้นะเพื่อน");
     }
 });
@@ -86,7 +88,7 @@ document.getElementById('pdf-input').addEventListener('change', async (e) => {
 // --- 5. Event: โหลดรูปภาพ ---
 document.getElementById('img-input').addEventListener('change', (e) => {
     const file = e.target.files[0];
-    if (!file || !pdfjsDoc) return alert("กรุณาโหลด PDF ก่อนวางรูป!");
+    if (!file || !pdfjsDoc) return alert("กรุณาโหลด PDF ก่อนวางรูปครับ!");
 
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -96,21 +98,28 @@ document.getElementById('img-input').addEventListener('change', (e) => {
         img.style.width = '150px';
         img.dataset.page = currentPageNum;
         
+        // เมื่อรูปโหลดเสร็จ (ได้ขนาดจริง) ค่อยเริ่มใช้ Interact
+        img.onload = () => {
+            setupInteract(img);
+            selectImage(img);
+        };
+        
         img.addEventListener('mousedown', (e) => {
             e.stopPropagation();
             selectImage(img);
         });
         
         document.getElementById('pdf-wrapper').appendChild(img);
-        setupInteract(img);
-        selectImage(img);
     };
     reader.readAsDataURL(file);
 });
 
-// --- 6. ฟังก์ชันลากวางและย่อขยาย (ล็อคสัดส่วน) ---
+// --- 6. ฟังก์ชันควบคุมการลากวางและย่อขยาย (ล็อคสัดส่วน) ---
 function setupInteract(el) {
     let x = 0, y = 0;
+    // คำนวณสัดส่วนจริงของรูปภาพ (Width / Height)
+    const ratio = el.naturalWidth / el.naturalHeight;
+
     interact(el)
         .draggable({
             listeners: {
@@ -126,12 +135,12 @@ function setupInteract(el) {
                 move(event) {
                     let { width, height } = event.rect;
                     
-                    // Logic ล็อคสัดส่วน (Shift หรือ Checkbox)
+                    // เช็คเงื่อนไขการล็อคสัดส่วน
                     const lockCheckbox = document.getElementById('aspect-ratio-lock');
                     const isLock = event.shiftKey || (lockCheckbox && lockCheckbox.checked);
                     
                     if (isLock) {
-                        const ratio = event.target.naturalWidth / event.target.naturalHeight;
+                        // บังคับสัดส่วนตามรูปต้นฉบับ
                         if (width / height > ratio) {
                             width = height * ratio;
                         } else {
@@ -157,12 +166,13 @@ window.nextPage = () => {
     if (!pdfjsDoc || currentPageNum >= pdfjsDoc.numPages) return;
     currentPageNum++; renderPage(currentPageNum);
 };
+
 window.prevPage = () => {
     if (!pdfjsDoc || currentPageNum <= 1) return;
     currentPageNum--; renderPage(currentPageNum);
 };
 
-// --- 8. ฟังก์ชัน Save PDF ---
+// --- 8. ฟังก์ชัน Save (รวมร่าง PDF) ---
 document.getElementById('save-btn').addEventListener('click', async () => {
     if (!pdfDocBytes) return alert("ไม่มีไฟล์ให้เซฟนะเพื่อน!");
     
