@@ -71,6 +71,7 @@ document.getElementById('img-input').addEventListener('change', (e) => {
         img.style.width = '150px';
         img.dataset.page = currentPageNum; // บันทึกว่ารูปนี้อยู่หน้าไหน
         img.addEventListener('click', (e) => {selectImage(e.target);});
+        img.addEventListener('mousedown', () => selectImage(img));
         
         document.getElementById('pdf-wrapper').appendChild(img);
         
