@@ -2,17 +2,17 @@
 body { 
     font-family: 'Segoe UI', sans-serif; 
     margin: 0; 
-    background: #2c3e50; /* เปลี่ยนเป็นสีเข้มดูโปรขึ้น */
-    overflow-x: hidden; /* กันหน้าจอเลื่อนซ้ายขวาในมือถือ */
+    background: #2c3e50; /* Dark Mode */
+    overflow-x: hidden; /* กันหน้าจอเลื่อนซ้ายขวา */
 }
 
-/* แถบเครื่องมือ (Responsive Toolbar) */
+/* แถบเครื่องมือ (Responsive) */
 .toolbar {
     background: #1a252f;
     color: white;
     padding: 10px;
     display: flex;
-    flex-wrap: wrap; /* ถ้าพื้นที่ไม่พอ ให้ปุ่มตกลงมาแถวใหม่ */
+    flex-wrap: wrap; /* ไหลลงมาเป็นแถวใหม่ถ้าที่ว่างไม่พอ */
     gap: 10px;
     align-items: center;
     justify-content: center;
@@ -29,31 +29,30 @@ body {
     font-size: 13px;
 }
 
-/* พื้นที่ทำงาน (Editor Area) */
+/* พื้นที่ทำงาน */
 #editor-container { 
     display: flex; 
     justify-content: center; 
     padding: 10px; 
     background: #34495e;
     min-height: calc(100vh - 60px);
-    overflow: auto; /* ให้เลื่อนดู PDF ได้ถ้าใหญ่กว่าจอ */
 }
 
 #pdf-wrapper { 
     position: relative; 
     background: white;
     box-shadow: 0 0 20px rgba(0,0,0,0.5);
-    max-width: 100%; /* ห้ามกว้างเกินหน้าจออุปกรณ์ */
+    max-width: 100%;
 }
 
 /* ทำให้ Canvas ปรับขนาดตาม Wrapper */
 #pdf-canvas {
     max-width: 100%;
-    height: auto !important; /* รักษาอัตราส่วน PDF */
+    height: auto !important;
     display: block;
 }
 
-/* ปุ่มกดให้ดูใหญ่ขึ้นนิดนึงในมือถือ */
+/* ปุ่มกดให้ดูดีขึ้น */
 button {
     padding: 8px 12px;
     cursor: pointer;
@@ -62,6 +61,7 @@ button {
     background: #ecf0f1;
     font-weight: bold;
     font-size: 13px;
+    transition: 0.2s;
 }
 
 button:active { transform: scale(0.95); }
@@ -70,67 +70,39 @@ button:active { transform: scale(0.95); }
 .save-btn { background: #27ae60 !important; color: white; }
 .delete-btn { background: #e74c3c !important; color: white; }
 
-/* สำหรับมือถือ (Screen width < 600px) */
-@media (max-width: 600px) {
-    .toolbar {
-        padding: 15px 5px;
-        gap: 8px;
-    }
-    button {
-        padding: 10px 8px;
-        font-size: 12px;
-    }
-
-    .draggable-text {
+/* 🛠 ✨ หัวใจหลักของการทัชบนมือถือ ✨ */
+.draggable-img, .draggable-text {
+    touch-action: none; /* สำคัญที่สุด! ห้าม Browser แย่ง Touch Event ไป Scroll หน้าจอ */
+    user-select: none;
     position: absolute;
-    top: 20px;
-    left: 20px;
-    min-width: 50px;
-    min-height: 20px;
-    border: 1px dashed #3498db;
-    padding: 5px;
     cursor: move;
-    font-size: 16px;
-    color: black;
-    background: rgba(255, 255, 255, 0.5);
-    outline: none; /* ลบเส้นขอบตอนโฟกัส */
+}
+
+/* สไตล์สำหรับข้อความ/ติ๊กถูก */
+.draggable-text {
     white-space: nowrap;
     overflow: hidden;
-    user-select: none; /* กันไม่ให้คลุมดำข้อความตอนกำลังลาก */
-    background: transparent; /* ติ๊กถูกไม่ควรมีพื้นหลังขาว */
-    user-select: none; /* กันการคลุมดำตอนลาก */
-    display: flex;
+    padding: 5px;
+    background: transparent;
+    display: flex; /* ช่วยจัดกึ่งกลาง Font */
     align-items: center;
     justify-content: center;
-    overflow: hidden; /* กันตัวอักษรล้นกล่อง */
-    white-space: nowrap;
+    border: 1px dashed transparent; /* ซ่อนเส้นประเริ่มต้น */
 }
 
-.draggable-text[contenteditable="true"] {
-    user-select: text; /* ให้คลุมดำได้ตอนกำลังแก้ไข */
-    background: white;
-    box-shadow: 0 0 5px rgba(0,0,0,0.2);
-}
-
-.draggable-text[contenteditable="false"].selected {
-    border: 2px solid #ff0000;
-}
-
-.draggable-text:hover {
+/* เมื่อถูกเลือก (Hover/Selected) */
+.draggable-text:hover, .draggable-text.selected {
     border: 1px dashed #3498db; 
 }
 
-/* เมื่อถูกเลือก (Selected) */
-.draggable-text.selected {
-    border: 2px solid #ff0000;
+.draggable-text[contenteditable="true"] {
+    user-select: text;
+    background: white;
+    box-shadow: 0 0 5px rgba(0,0,0,0.2);
+    border: 1px solid #27ae60;
 }
 
-.draggable-img, .draggable-text {
-    touch-action: none; /* สำคัญมาก! บอกมือถือว่าไม่ต้อง Scroll ถ้าโดนตัวนี้ */
-    user-select: none;
-    position: absolute;
-}
-
+/* 📱 ปุ่มวงกลมเล็กๆ สำหรับลาก (สำหรับมือถือ) */
 .drag-handle {
     position: absolute;
     top: -15px;
@@ -149,5 +121,8 @@ button:active { transform: scale(0.95); }
     box-shadow: 0 2px 5px rgba(0,0,0,0.3);
 }
 
+/* สำหรับมือถือ (Screen width < 600px) */
+@media (max-width: 600px) {
+    .toolbar { gap: 8px; }
+    button { padding: 10px 8px; font-size: 12px; }
 }
-
