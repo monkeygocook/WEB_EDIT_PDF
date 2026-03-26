@@ -83,11 +83,27 @@ function setupInteract(el) {
         listeners: { move(event) {
             let { width, height } = event.rect;
             const isLock = document.getElementById('aspect-ratio-lock')?.checked;
+            
+            // 1. จัดการสัดส่วน (ถ้าเป็นรูปภาพ)
             if (isLock && ratio) {
                 if (width / height > ratio) width = height * ratio; else height = width / ratio;
             }
+            
             x += event.deltaRect.left; y += event.deltaRect.top;
-            Object.assign(event.target.style, { width: `${width}px`, height: `${height}px`, transform: `translate(${x}px, ${y}px)` });
+
+            // 2. อัปเดตขนาดกล่อง
+            Object.assign(event.target.style, { 
+                width: `${width}px`, 
+                height: `${height}px`, 
+                transform: `translate(${x}px, ${y}px)` 
+            });
+
+            // 3. ✨ ทริคเด็ด: ถ้าเป็นข้อความหรือติ๊กถูก ให้ขยาย Font ตามความสูงกล่อง
+            if (event.target.classList.contains('draggable-text')) {
+                // ลดขนาดลงนิดหน่อย (0.8) เพื่อให้ตัวอักษรไม่เบียดขอบกล่องเกินไป
+                event.target.style.fontSize = `${height * 0.8}px`; 
+                event.target.style.lineHeight = `${height}px`; // จัดให้อยู่กึ่งกลางแนวตั้ง
+            }
         }}
     });
 }

@@ -99,6 +99,11 @@ button:active { transform: scale(0.95); }
     user-select: none; /* กันไม่ให้คลุมดำข้อความตอนกำลังลาก */
     background: transparent; /* ติ๊กถูกไม่ควรมีพื้นหลังขาว */
     user-select: none; /* กันการคลุมดำตอนลาก */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden; /* กันตัวอักษรล้นกล่อง */
+    white-space: nowrap;
 }
 
 .draggable-text[contenteditable="true"] {
