@@ -10,7 +10,12 @@
     <div class="toolbar">
         <input type="file" id="pdf-input" accept=".pdf">
         <input type="file" id="img-input" accept="image/*">
-        <button id="save-btn">Save PDF</button>
+    
+        <button onclick="prevPage()">หน้าก่อนหน้า</button>
+        <span id="page-info">หน้า 0 / 0</span>
+        <button onclick="nextPage()">หน้าถัดไป</button>
+    
+        <button id="save-btn" style="background: #28a745; color: white;">Save PDF</button>
     </div>
 
     <div id="editor-container">
