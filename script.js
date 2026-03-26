@@ -28,27 +28,44 @@ window.addText = () => {
     if (!pdfjsDoc) return alert("โหลด PDF ก่อนนะเพื่อน!");
     
     const textDiv = document.createElement('div');
-    textDiv.innerText = "พิมพ์ข้อความที่นี่...";
-    textDiv.contentEditable = "true"; // ทำให้พิมพ์ได้
+    textDiv.innerText = "ดับเบิ้ลคลิกเพื่อแก้ไข...";
+    textDiv.contentEditable = "false"; // เริ่มต้นห้ามแก้ไข เพื่อให้ลากได้
     textDiv.classList.add('draggable-text');
     textDiv.dataset.page = currentPageNum;
-    textDiv.dataset.type = "text"; // แยกประเภทว่าเป็นข้อความ
+    textDiv.dataset.type = "text";
 
-    // ป้องกันไม่ให้ลากวางตอนกำลังพิมพ์
-    textDiv.addEventListener('focus', () => {
+    // --- ระบบ Double Click เพื่อแก้ไข ---
+    textDiv.addEventListener('dblclick', () => {
+        textDiv.contentEditable = "true";
+        textDiv.focus();
+        // หยุดการลากวางชั่วคราวขณะพิมพ์
         interact(textDiv).draggable(false);
-    });
-    textDiv.addEventListener('blur', () => {
-        interact(textDiv).draggable(true);
+        textDiv.style.cursor = "text";
+        textDiv.style.border = "2px solid #27ae60"; // เปลี่ยนสีให้รู้ว่ากำลังพิมพ์
     });
 
+    // --- ระบบ Blur (คลิกข้างนอก) เพื่อกลับไปโหมดลากวาง ---
+    textDiv.addEventListener('blur', () => {
+        textDiv.contentEditable = "false";
+        // กลับมาเปิดการลากวางเหมือนเดิม
+        interact(textDiv).draggable(true);
+        textDiv.style.cursor = "move";
+        textDiv.style.border = "1px dashed #3498db";
+        
+        // ถ้าพิมพ์จนว่างเปล่า ให้ใส่ข้อความ Default ไว้กันหาย
+        if (textDiv.innerText.trim() === "") {
+            textDiv.innerText = "ข้อความว่างเปล่า";
+        }
+    });
+
+    // คลิกครั้งเดียวแค่เพื่อเลือก (Select) ให้ลบหรือย้ายได้
     textDiv.addEventListener('mousedown', (e) => {
         e.stopPropagation();
         selectElementFunc(textDiv);
     });
 
     document.getElementById('pdf-wrapper').appendChild(textDiv);
-    setupInteract(textDiv);
+    setupInteract(textDiv); // เรียกใช้ interact.js
     selectElementFunc(textDiv);
 };
 

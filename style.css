@@ -96,6 +96,13 @@ button:active { transform: scale(0.95); }
     outline: none; /* ลบเส้นขอบตอนโฟกัส */
     white-space: nowrap;
     overflow: hidden;
+    user-select: none; /* กันไม่ให้คลุมดำข้อความตอนกำลังลาก */
+}
+
+.draggable-text[contenteditable="true"] {
+    user-select: text; /* ให้คลุมดำได้ตอนกำลังแก้ไข */
+    background: white;
+    box-shadow: 0 0 5px rgba(0,0,0,0.2);
 }
 
 /* เมื่อถูกเลือก (Selected) */
