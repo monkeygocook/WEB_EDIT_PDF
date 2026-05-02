@@ -180,41 +180,69 @@ async function renderPage(num) {
 window.nextPage = () => { if (pdfjsDoc && currentPageNum < pdfjsDoc.numPages) { currentPageNum++; renderPage(currentPageNum); } };
 window.prevPage = () => { if (pdfjsDoc && currentPageNum > 1) { currentPageNum--; renderPage(currentPageNum); } };
 
-// --- 6. ฟังก์ชัน Save ---
+// --- แก้ไขฟังก์ชัน Save ในไฟล์ JavaScript ---
 document.getElementById('save-btn').addEventListener('click', async () => {
-    if (!pdfDocBytes) return alert("เลือกไฟล์ PDF ก่อนเพื่อน!");
-    const pdfDoc = await PDFDocument.load(pdfDocBytes);
-    const pages = pdfDoc.getPages();
-    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-    const elements = document.querySelectorAll('.draggable-img, .draggable-text');
-    
-    for (const el of elements) {
-        const pageIdx = parseInt(el.dataset.page) - 1;
-        const page = pages[pageIdx];
-        const { width: pW, height: pH } = page.getSize();
-        const canvas = document.getElementById('pdf-canvas');
-        const rX = pW / canvas.width; const rY = pH / canvas.height;
-        const rect = el.getBoundingClientRect();
-        const wRect = document.getElementById('pdf-wrapper').getBoundingClientRect();
+    try {
+        if (!pdfDocBytes) return alert("เลือกไฟล์ PDF ก่อนเพื่อน!");
         
-        const pX = (rect.left - wRect.left) * rX;
-        const pY = pH - ((rect.top - wRect.top + rect.height) * rY);
+        const pdfDoc = await PDFLib.PDFDocument.load(pdfDocBytes); // ใช้ PDFLib. โดยตรงถ้าประกาศแบบนั้น
+        const pages = pdfDoc.getPages();
+        const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
+        const elements = document.querySelectorAll('.draggable-img, .draggable-text');
+        
+        for (const el of elements) {
+            const pageIdx = parseInt(el.dataset.page) - 1;
+            const page = pages[pageIdx];
+            const { width: pW, height: pH } = page.getSize();
+            const canvas = document.getElementById('pdf-canvas');
+            const rX = pW / canvas.width; 
+            const rY = pH / canvas.height;
+            
+            const rect = el.getBoundingClientRect();
+            const wRect = document.getElementById('pdf-wrapper').getBoundingClientRect();
+            
+            const pX = (rect.left - wRect.left) * rX;
+            const pY = pH - ((rect.top - wRect.top + rect.height) * rY);
 
-        if (el.dataset.type === "text") {
-            page.drawText(el.innerText, { 
-                x: pX, y: pY + (5 * rY), 
-                size: parseFloat(window.getComputedStyle(el).fontSize) * rY, 
-                font: font, color: rgb(0,0,0) 
-            });
-        } else {
-            const imgBytes = await fetch(el.src).then(res => res.arrayBuffer());
-            const img = el.src.includes('png') ? await pdfDoc.embedPng(imgBytes) : await pdfDoc.embedJpg(imgBytes);
-            page.drawImage(img, { x: pX, y: pY, width: rect.width * rX, height: rect.height * rY });
+            if (el.dataset.type === "text") {
+                // เซฟข้อความ หรือ เครื่องหมายติ๊ก
+                page.drawText(el.innerText, { 
+                    x: pX, 
+                    y: pY + (2 * rY), // ปรับ offset นิดหน่อย
+                    size: parseFloat(window.getComputedStyle(el).fontSize) * rY, 
+                    font: font, 
+                    color: PDFLib.rgb(0,0,0) 
+                });
+            } else {
+                // เซฟรูปภาพ - เปลี่ยนวิธีดึง Bytes
+                const response = await fetch(el.src);
+                const imgBytes = await response.arrayBuffer();
+                
+                let img;
+                if (el.src.includes('image/png') || el.src.endsWith('.png')) {
+                    img = await pdfDoc.embedPng(imgBytes);
+                } else {
+                    img = await pdfDoc.embedJpg(imgBytes);
+                }
+                page.drawImage(img, { 
+                    x: pX, 
+                    y: pY, 
+                    width: rect.width * rX, 
+                    height: rect.height * rY 
+                });
+            }
         }
+        
+        const pdfDataUri = await pdfDoc.saveAsBase64({ dataUri: true });
+        const link = document.createElement('a');
+        link.href = pdfDataUri;
+        link.download = 'edited_by_to.pdf'; 
+        link.click();
+
+    } catch (err) {
+        console.error(err);
+        alert("เกิดข้อผิดพลาดตอนเซฟ: " + err.message);
     }
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(new Blob([await pdfDoc.save()], { type: 'application/pdf' }));
-    link.download = 'edited.pdf'; link.click();
 });
 
 function addDragHandle(el) {
